@@ -151,9 +151,7 @@ function addToInventory() {
                         if (err) throw err;
                         console.log("Inventory for Item ID " + productID + " has been updated to " + (productRes.stock_quantity + addedInventory) + ".");
                         console.log("\n-------------------------------------------------------------------------------------------------------------\n");
-    
-                        // End the database connection
-                        connection.end();
+                        startBamazon();
                     })
                 }
             });
@@ -162,23 +160,14 @@ function addToInventory() {
 }
 
 function addNewProduct() {
+    // Add new product to inventory
     inquirer.prompt([
         {
-            name: "productID",
-            type: "input",
-            message: "What is the product ID number?",
-            validate: function(value) {
-                if (isNaN(value) === false) {
-                return true;
-                }
-                return false;
-            }
-        }, {
             name: "productName",
             type: "input",
             message: "What is the product name?",
             validate: function(value) {
-                if (isNaN(value) === false) {
+                if (isNaN(value) === true) {
                 return true;
                 }
                 return false;
@@ -188,7 +177,7 @@ function addNewProduct() {
             type: "input",
             message: "What department is the product in?",
             validate: function(value) {
-                if (isNaN(value) === false) {
+                if (isNaN(value) === true) {
                 return true;
                 }
                 return false;
@@ -196,7 +185,7 @@ function addNewProduct() {
         }, {
             name: "productPrice",
             type: "input",
-            message: "What is the product Price?",
+            message: "What is the product Price? (without $)",
             validate: function(value) {
                 if (isNaN(value) === false) {
                 return true;
@@ -213,19 +202,32 @@ function addNewProduct() {
                 }
                 return false;
             }
-        }.then(function(answer) {
-            var query = "INSERT INTO products SET ?";
-            connection.query(query,
-            { 
-                item_id: answer.productID,
-                product_name: answer.productName,
-                department_name: answer.productDepartment,
-                price: answer.productPrice,
-                stock_quantity: amount.productQuantity
-            }, function(err, res) {
-                if (err) throw err;
-                console.log(res.affectedRows + " product inserted!\n");
-            });
-        })
-    ]);
+        }
+    ]).then(function(answer) {
+        var query = "INSERT INTO products SET ?";
+        connection.query(query,
+        // left out item_id so that it would be automatically assigned
+        {
+            product_name: answer.productName,
+            department_name: answer.productDepartment,
+            price: answer.productPrice,
+            stock_quantity: answer.productQuantity
+        }, function(err, res, fields) {
+            if (err) throw err;
+            console.log("\n-------------------------------------------------------------------------------------------------------------\n");
+            console.log(res.affectedRows + " product(s) inserted!");
+            console.log(
+                "Product Name: " +
+                answer.productName +
+                " || Department Name: " +
+                answer.productDepartment +
+                " || Price: $" +
+                answer.productPrice +
+                " || Stock: " +
+                answer.productQuantity
+            );
+            console.log("\n-------------------------------------------------------------------------------------------------------------\n");
+            startBamazon();
+        });
+    })
 }
